@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .controls-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .control-group {
+            margin-bottom: 2rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .preset-btn {
+            padding: 0.7rem 1rem;
+            border: 2px solid #e3e8ee;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .preset-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+
+        .preset-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e3e8ee;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .slider-container {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e3e8ee;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-value {
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #667eea;
+            margin-top: 0.5rem;
+        }
+
+        .quick-years {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .year-btn {
+            padding: 0.5rem;
+            border: 2px solid #e3e8ee;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .year-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-1px);
+        }
+
+        .year-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .return-inputs {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .return-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .return-label {
+            flex: 1;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .return-input {
+            width: 80px;
+            padding: 0.5rem;
+            border: 2px solid #e3e8ee;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: #ccc;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: #667eea;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle.active::after {
+            transform: translateX(22px);
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(238, 90, 82, 0.4);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            height: 500px;
+            position: relative;
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .table tr:hover {
+            background: #f8f9ff;
+        }
+
+        .breakdown-table {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .sp500-color { color: #2196F3; }
+        .bitcoin-color { color: #FF9800; }
+        .realestate-color { color: #4CAF50; }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .preset-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-years {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls-panel {
+                position: static;
+                padding: 1.5rem;
+            }
+
+            .chart-container {
+                height: 300px;
+                padding: 1rem;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.7rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .preset-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-years {
+                grid-template-columns: 1fr;
+            }
+
+            .return-input-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            .toggle-container {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Investment Calculator</h1>
+            <p>Compare S&P 500, Bitcoin, and Australian Real Estate returns over time</p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="control-group">
+                    <label class="control-label">Initial Investment</label>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" data-amount="10">$10</button>
+                        <button class="preset-btn" data-amount="20">$20</button>
+                        <button class="preset-btn" data-amount="50">$50</button>
+                        <button class="preset-btn" data-amount="100">$100</button>
+                        <button class="preset-btn active" data-amount="1000">$1K</button>
+                        <button class="preset-btn" data-amount="5000">$5K</button>
+                        <button class="preset-btn" data-amount="10000">$10K</button>
+                        <button class="preset-btn" data-amount="custom">Custom</button>
+                    </div>
+                    <input type="number" id="initialAmount" class="input-field" value="1000" placeholder="Enter amount" min="1">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Monthly Contribution (Optional)</label>
+                    <input type="number" id="monthlyContribution" class="input-field" value="0" placeholder="Enter monthly amount" min="0">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Time Period</label>
+                    <div class="slider-container">
+                        <input type="range" id="timeSlider" class="slider" min="1" max="50" value="20">
+                        <div class="slider-value"><span id="timeValue">20</span> years</div>
+                    </div>
+                    <div class="quick-years">
+                        <button class="year-btn" data-years="10">10Y</button>
+                        <button class="year-btn active" data-years="20">20Y</button>
+                        <button class="year-btn" data-years="30">30Y</button>
+                        <button class="year-btn" data-years="50">50Y</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Annual Return Rates</label>
+                    <div class="return-inputs">
+                        <div class="return-input-group">
+                            <span class="return-label sp500-color">S&P 500</span>
+                            <input type="number" id="sp500Return" class="return-input" value="10" min="0" max="50" step="0.1">
+                            <span>%</span>
+                        </div>
+                        <div class="return-input-group">
+                            <span class="return-label bitcoin-color">Bitcoin</span>
+                            <input type="number" id="bitcoinReturn" class="return-input" value="15" min="0" max="100" step="0.1">
+                            <span>%</span>
+                        </div>
+                        <div class="return-input-group">
+                            <span class="return-label realestate-color">AU Real Estate</span>
+                            <input type="number" id="realEstateReturn" class="return-input" value="7" min="0" max="30" step="0.1">
+                            <span>%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="toggle-container">
+                        <span>Adjust for Inflation (3% annual)</span>
+                        <div class="toggle" id="inflationToggle"></div>
+                    </div>
+                </div>
+
+                <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
+            </div>
+
+            <div class="results-panel">
+                <div class="chart-container">
+                    <canvas id="investmentChart"></canvas>
+                </div>
+
+                <div class="comparison-table">
+                    <h3>Investment Comparison</h3>
+                    <table class="table" id="comparisonTable">
+                        <thead>
+                            <tr>
+                                <th>Investment</th>
+                                <th>Final Value</th>
+                                <th>Total Contributions</th>
+                                <th>Absolute Gain</th>
+                                <th>Percentage Return</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="breakdown-table">
+                    <h3>Year-by-Year Breakdown</h3>
+                    <table class="table" id="breakdownTable">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>S&P 500</th>
+                                <th>Bitcoin</th>
+                                <th>AU Real Estate</th>
+                                <th>Total Contributions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breakdownBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class InvestmentCalculator {
+            constructor() {
+                this.chart = null;
+                this.inflationEnabled = false;
+                this.initializeElements();
+                this.setupEventListeners();
+                this.calculate();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    initialAmount: document.getElementById('initialAmount'),
+                    monthlyContribution: document.getElementById('monthlyContribution'),
+                    timeSlider: document.getElementById('timeSlider'),
+                    timeValue: document.getElementById('timeValue'),
+                    sp500Return: document.getElementById('sp500Return'),
+                    bitcoinReturn: document.getElementById('bitcoinReturn'),
+                    realEstateReturn: document.getElementById('realEstateReturn'),
+                    inflationToggle: document.getElementById('inflationToggle'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    errorMessage: document.getElementById('errorMessage'),
+                    comparisonBody: document.getElementById('comparisonBody'),
+                    breakdownBody: document.getElementById('breakdownBody')
+                };
+            }
+
+            setupEventListeners() {
+                // Preset buttons
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const amount = e.target.dataset.amount;
+                        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        if (amount !== 'custom') {
+                            this.elements.initialAmount.value = amount;
+                        }
+                        this.calculate();
+                    });
+                });
+
+                // Year preset buttons
+                document.querySelectorAll('.year-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const years = e.target.dataset.years;
+                        document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        this.elements.timeSlider.value = years;
+                        this.elements.timeValue.textContent = years;
+                        this.calculate();
+                    });
+                });
+
+                // Input fields
+                Object.values(this.elements).forEach(element => {
+                    if (element.type === 'number' || element.type === 'range') {
+                        element.addEventListener('input', () => this.calculate());
+                    }
+                });
+
+                // Time slider
+                this.elements.timeSlider.addEventListener('input', (e) => {
+                    this.elements.timeValue.textContent = e.target.value;
+                    this.updateYearButtons(parseInt(e.target.value));
+                    this.calculate();
+                });
+
+                // Inflation toggle
+                this.elements.inflationToggle.addEventListener('click', () => {
+                    this.inflationEnabled = !this.inflationEnabled;
+                    this.elements.inflationToggle.classList.toggle('active');
+                    this.calculate();
+                });
+
+                // Reset button
+                this.elements.resetBtn.addEventListener('click', () => this.reset());
+
+                // Custom amount detection
+                this.elements.initialAmount.addEventListener('input', () => {
+                    const currentValue = parseInt(this.elements.initialAmount.value);
+                    const presetValues = [10, 20, 50, 100, 1000, 5000, 10000];
+                    
+                    document.querySelectorAll('.preset-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.amount == currentValue) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    if (!presetValues.includes(currentValue)) {
+                        document.querySelector('[data-amount="custom"]').classList.add('active');
+                    }
+                });
+            }
+
+            updateYearButtons(currentYear) {
+                const yearButtons = [10, 20, 30, 50];
+                document.querySelectorAll('.year-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.dataset.years) === currentYear) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            validateInputs() {
+                const initial = parseFloat(this.elements.initialAmount.value);
+                const monthly = parseFloat(this.elements.monthlyContribution.value);
+                const sp500 = parseFloat(this.elements.sp500Return.value);
+                const bitcoin = parseFloat(this.elements.bitcoinReturn.value);
+                const realEstate = parseFloat(this.elements.realEstateReturn.value);
+
+                if (initial <= 0) {
+                    this.showError('Initial investment must be greater than 0');
+                    return false;
+                }
+
+                if (monthly < 0) {
+                    this.showError('Monthly contribution cannot be negative');
+                    return false;
+                }
+
+                if (sp500 < 0 || bitcoin < 0 || realEstate < 0) {
+                    this.showError('Return rates cannot be negative');
+                    return false;
+                }
+
+                if (sp500 > 50 || bitcoin > 100 || realEstate > 30) {
+                    this.showError('Return rates seem unusually high. Please check your inputs.');
+                    return false;
+                }
+
+                this.hideError();
+                return true;
+            }
+
+            showError(message) {
+                this.elements.errorMessage.textContent = message;
+                this.elements.errorMessage.style.display = 'block';
+            }
+
+            hideError() {
+                this.elements.errorMessage.style.display = 'none';
+            }
+
+            calculate() {
+                if (!this.validateInputs()) return;
+
+                const initial = parseFloat(this.elements.initialAmount.value) || 0;
+                const monthly = parseFloat(this.elements.monthlyContribution.value) || 0;
+                const years = parseInt(this.elements.timeSlider.value);
+                const sp500Rate = parseFloat(this.elements.sp500Return.value) / 100;
+                const bitcoinRate = parseFloat(this.elements.bitcoinReturn.value) / 100;
+                const realEstateRate = parseFloat(this.elements.realEstateReturn.value) / 100;
+                const inflationRate = this.inflationEnabled ? 0.03 : 0;
+
+                const results = this.calculateInvestments(initial, monthly, years, {
+                    sp500: sp500Rate,
+                    bitcoin: bitcoinRate,
+                    realEstate: realEstateRate,
+                    inflation: inflationRate
+                });
+
+                this.updateChart(results);
+                this.updateComparisonTable(results);
+                this.updateBreakdownTable(results);
+            }
+
+            calculateInvestments(initial, monthly, years, rates) {
+                const results = {
+                    years: [],
+                    sp500: [],
+                    bitcoin: [],
+                    realEstate: [],
+                    contributions: []
+                };
+
+                let sp500Value = initial;
+                let bitcoinValue = initial;
+                let realEstateValue = initial;
+                let totalContributions = initial;
+
+                results.years.push(0);
+                results.sp500.push(initial);
+                results.bitcoin.push(initial);
+                results.realEstate.push(initial);
+                results.contributions.push(initial);
+
+                for (let year = 1; year <= years; year++) {
+                    // Add monthly contributions for the year
+                    const yearlyContributions = monthly * 12;
+                    sp500Value += yearlyContributions;
+                    bitcoinValue += yearlyContributions;
+                    realEstateValue += yearlyContributions;
+                    totalContributions += yearlyContributions;
+
+                    // Apply annual returns
+                    sp500Value *= (1 + rates.sp500);
+                    bitcoinValue *= (1 + rates.bitcoin);
+                    realEstateValue *= (1 + rates.realEstate);
+
+                    // Adjust for inflation if enabled
+                    const inflationAdjustment = Math.pow(1 + rates.inflation, year);
+                    
+                    results.years.push(year);
+                    results.sp500.push(this.inflationEnabled ? sp500Value / inflationAdjustment : sp500Value);
+                    results.bitcoin.push(this.inflationEnabled ? bitcoinValue / inflationAdjustment : bitcoinValue);
+                    results.realEstate.push(this.inflationEnabled ? realEstateValue / inflationAdjustment : realEstateValue);
+                    results.contributions.push(totalContributions);
+                }
+
+                return results;
+            }
+
+            updateChart(results) {
+                const ctx = document.getElementById('investmentChart').getContext('2d');
+                
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: results.years,
+                        datasets: [
+                            {
+                                label: 'S&P 500',
+                                data: results.sp500,
+                                borderColor: '#2196F3',
+                                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Bitcoin',
+                                data: results.bitcoin,
+                                borderColor: '#FF9800',
+                                backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'AU Real Estate',
+                                data: results.realEstate,
+                                borderColor: '#4CAF50',
+                                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Investment Growth Over Time${this.inflationEnabled ? ' (Inflation Adjusted)' : ''}`,
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': $' + context.parsed.y.toLocaleString(undefined, {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        });
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Years'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Value ($)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+
+            updateComparisonTable(results) {
+                const final = results.years.length - 1;
+                const totalContributions = results.contributions[final];
+                
+                const investments = [
+                    { name: 'S&P 500', value: results.sp500[final], class: 'sp500-color' },
+                    { name: 'Bitcoin', value: results.bitcoin[final], class: 'bitcoin-color' },
+                    { name: 'AU Real Estate', value: results.realEstate[final], class: 'realestate-color' }
+                ];
+
+                this.elements.comparisonBody.innerHTML = investments.map(inv => {
+                    const gain = inv.value - totalContributions;
+                    const percentReturn = ((inv.value - totalContributions) / totalContributions * 100);
+                    
+                    return `
+                        <tr>
+                            <td class="${inv.class}"><strong>${inv.name}</strong></td>
+                            <td><strong>$${inv.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</strong></td>
+                            <td>$${totalContributions.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                            <td class="${gain >= 0 ? 'sp500-color' : 'bitcoin-color'}">$${gain.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                            <td class="${percentReturn >= 0 ? 'sp500-color' : 'bitcoin-color'}">${percentReturn.toFixed(1)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            updateBreakdownTable(results) {
+                this.elements.breakdownBody.innerHTML = results.years.map((year, index) => `
+                    <tr>
+                        <td><strong>Year ${year}</strong></td>
+                        <td class="sp500-color">${results.sp500[index].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td class="bitcoin-color">${results.bitcoin[index].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td class="realestate-color">${results.realEstate[index].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td>${results.contributions[index].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                    </tr>
+                `).join('');
+            }
+
+            reset() {
+                this.elements.initialAmount.value = 1000;
+                this.elements.monthlyContribution.value = 0;
+                this.elements.timeSlider.value = 20;
+                this.elements.timeValue.textContent = 20;
+                this.elements.sp500Return.value = 10;
+                this.elements.bitcoinReturn.value = 15;
+                this.elements.realEstateReturn.value = 7;
+                
+                if (this.inflationEnabled) {
+                    this.elements.inflationToggle.classList.remove('active');
+                    this.inflationEnabled = false;
+                }
+
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.amount === '1000') {
+                        btn.classList.add('active');
+                    }
+                });
+
+                document.querySelectorAll('.year-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.years === '20') {
+                        btn.classList.add('active');
+                    }
+                });
+
+                this.calculate();
+            }
+
+            formatCurrency(value) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(value);
+            }
+        }
+
+        // Initialize the calculator when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new InvestmentCalculator();
+        });
+    </script>
+</body>
+</html>
